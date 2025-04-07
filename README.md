@@ -51,9 +51,9 @@ pip install -r requirements.txt
 ```
 
 
-
 ### 2️⃣ Start the Bank Server
 
+Run each component in a different terminal
 Run the following command:
 
 ```bash
@@ -65,6 +65,7 @@ This will launch the Bank Server which supports multiple banks like HDFC, SBI, a
 
 ### 3️⃣ Register a Merchant (via UPI Machine)
 
+Replace the IP addresses in the user.py and upi_machine.py with your LAN IP address, you can check IP address by running ipconfig(windows)/ifconfig(Linux/Mac)
 Run the following command:
 
 ```bash
