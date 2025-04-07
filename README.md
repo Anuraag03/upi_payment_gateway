@@ -1,6 +1,6 @@
 # UPI Payment System 💸
 
-A simulated UPI (Unified Payments Interface) banking system built with **Python**, leveraging **FastAPI**, **SQLite**, and **socket programming**. It replicates core functionality of UPI transactions between **Users**, **Merchants**, and **Banks** across a shared LAN.
+A simulated UPI (Unified Payments Interface) banking system built with **Python**, leveraging **SQLite**, and **socket programming**. It replicates core functionality of UPI transactions between **Users**, **Merchants**, and **Banks** across a shared LAN.
 
 ---
 
@@ -101,9 +101,19 @@ Choose:
 If successful, you’ll see the response from the bank.
 
 ---
+### 4️⃣ Bank Dashboard
+
+Run 
+```bash
+python bank_dashboard.py
+```
+
+After you have registered users , merchants and performed transactions to see the list of users , merchants , their details and transactions.
+
+---
 
 ## 💡 Notes
-
+- Replace the IP addresses in the user.py and upi_machine.py with your LAN IP address, you can check IP address by running ipconfig(windows)/ifconfig(Linux/Mac)
 - All sockets run over LAN (use private IPs like `192.168.x.x` or `172.x.x.x`).
 - Ensure firewalls allow connections to ports `8000` and `9001`.
 - Each entity (user, merchant) is linked to a specific bank via IFSC code.
