@@ -4,13 +4,15 @@ import threading
 import uuid
 from speck import SpeckCipher
 import qrcode
-
+hostname = socket.gethostname()
+IPAddr = socket.gethostbyname(hostname)
 UPI_MACHINE_HOST = '0.0.0.0'
 UPI_MACHINE_PORT = 8000
 
-BANK_SERVER_IP = "172.16.126.36" # Replace with your LAN IP address
+BANK_SERVER_IP = f"{IPAddr}"
 BANK_SERVER_PORT = 9001
 
+# ✅ Global merchant info
 MERCHANT_IFSC = None
 MERCHANT_MID = None
 MERCHANT_VMID = None

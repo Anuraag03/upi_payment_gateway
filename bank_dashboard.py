@@ -1,47 +1,58 @@
 import sqlite3
+from prettytable import PrettyTable
 
-def view_users_and_transactions():
+def display_users():
     conn = sqlite3.connect("bank_data.db")
     cursor = conn.cursor()
 
-    print("=== Users and Their Details ===")
-    cursor.execute("SELECT * FROM users")
+    cursor.execute("SELECT username, balance, bank, ifsc, uid, mobile, mmid FROM users")
     users = cursor.fetchall()
-    for user in users:
-        print(f"Username: {user[0]}, Balance: ₹{user[3]}, Bank: {user[4]}, IFSC: {user[5]}, UID: {user[6]}, Mobile: {user[7]}, MMID: {user[8]}")
-        print("  Transactions:")
-        cursor.execute("SELECT * FROM transactions WHERE from_user = ?", (user[0],))
-        transactions = cursor.fetchall()
-        if transactions:
-            for txn in transactions:
-                print(f"    TXN ID: {txn[0]}, To Merchant: {txn[3]}, Amount: ₹{txn[5]}, Status: {txn[6]}, Timestamp: {txn[7]}")
-        else:
-            print("    No transactions found.")
-        print()
+
+    if users:
+        table = PrettyTable()
+        table.field_names = ["Username", "Balance", "Bank", "IFSC", "UID", "Mobile", "MMID"]
+        for user in users:
+            table.add_row(user)
+        print("\n[All Users]")
+        print(table)
+    else:
+        print("\n[No Users Found]")
 
     conn.close()
 
-def view_merchants_and_transactions():
+def display_merchants():
     conn = sqlite3.connect("bank_data.db")
     cursor = conn.cursor()
 
-    print("=== Merchants and Their Details ===")
-    cursor.execute("SELECT * FROM merchants")
+    cursor.execute("SELECT name, balance, bank, ifsc, mid FROM merchants")
     merchants = cursor.fetchall()
-    for merchant in merchants:
-        print(f"Name: {merchant[0]}, Balance: ₹{merchant[2]}, Bank: {merchant[3]}, IFSC: {merchant[4]}, MID: {merchant[5]}")
-        print("  Transactions:")
-        cursor.execute("SELECT * FROM transactions WHERE to_merchant = ?", (merchant[0],))
-        transactions = cursor.fetchall()
-        if transactions:
-            for txn in transactions:
-                print(f"    TXN ID: {txn[0]}, From User: {txn[1]}, Amount: ₹{txn[5]}, Status: {txn[6]}, Timestamp: {txn[7]}")
-        else:
-            print("    No transactions found.")
-        print()
+
+    if merchants:
+        table = PrettyTable()
+        table.field_names = ["Merchant Name", "Balance", "Bank", "IFSC", "MID"]
+        for merchant in merchants:
+            table.add_row(merchant)
+        print("\n[All Merchants]")
+        print(table)
+    else:
+        print("\n[No Merchants Found]")
 
     conn.close()
 
 if __name__ == "__main__":
-    view_users_and_transactions()
-    view_merchants_and_transactions()
+    while True:
+        print("\nBank Dashboard")
+        print("1. Display All Users")
+        print("2. Display All Merchants")
+        print("3. Exit")
+        choice = input("Enter your choice: ").strip()
+
+        if choice == "1":
+            display_users()
+        elif choice == "2":
+            display_merchants()
+        elif choice == "3":
+            print("Exiting Bank Dashboard. Goodbye!")
+            break
+        else:
+            print("Invalid choice. Please try again.")
