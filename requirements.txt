@@ -1,3 +1,4 @@
+simsonspeckciphers
 qrcode
 pillow
 prettytable
