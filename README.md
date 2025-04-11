@@ -67,6 +67,7 @@ This will launch the Bank Server which supports multiple banks like HDFC, SBI, a
 
 Replace the IP addresses in the user.py and upi_machine.py with your LAN IP address, you can check IP address by running ipconfig(windows)/ifconfig(Linux/Mac)
 Run the following command:
+Update the BANK_SERVER_IP with the IP of the device running the bank.py script.
 
 ```bash
 python upi_machine.py
@@ -84,7 +85,8 @@ After registration, choose option `2` and enter your MID to generate a VMID and 
 ### 4️⃣ Register and Transact as User
 
 Run the following command:
-
+Update the BANK_SERVER_IP with the IP of the device running the bank.py script.
+Update the UPI_MACHINE_HOST with the IP of the device running the upi_machine.py script
 ```bash
 python user_client.py
 ```
@@ -109,12 +111,25 @@ Run
 python bank_dashboard.py
 ```
 
-After you have registered users , merchants and performed transactions to see the list of users , merchants , their details and transactions.
+After you have registered users , merchants and performed transactions to see the list of users , merchants and thier details
 
 ---
 
+### 4️⃣ Blockchain Logging
+
+Run 
+```bash
+python view_blockchains.py
+```
+
+Transactions are logged in Centralized Blockchain Ledgers for each Bank , These transactions per bank can be viewed by running the above script.
+
+---
+
+
+
 ## 💡 Notes
-- Replace the IP addresses in the user.py and upi_machine.py with your LAN IP address, you can check IP address by running ipconfig(windows)/ifconfig(Linux/Mac)
+- Replace the IP addresses before running the scripts
 - All sockets run over LAN (use private IPs like `192.168.x.x` or `172.x.x.x`).
 - Ensure firewalls allow connections to ports `8000` and `9001`.
 - Each entity (user, merchant) is linked to a specific bank via IFSC code.
