@@ -14,7 +14,7 @@ This project consists of **3 key components**:
 2. **UPI Machine (`upi_machine.py`)**  
    Acts as the central node for merchant registration and QR/VMID-based transaction initiation.
 
-3. **User Client (`user_client.py`)**  
+3. **User Client (`user.py`)**  
    Used by customers to register and perform UPI transactions using MMID and VMID.
 
 ---
