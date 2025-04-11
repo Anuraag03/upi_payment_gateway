@@ -88,7 +88,7 @@ Run the following command:
 Update the BANK_SERVER_IP with the IP of the device running the bank.py script.
 Update the UPI_MACHINE_HOST with the IP of the device running the upi_machine.py script
 ```bash
-python user_client.py
+python user.py
 ```
 
 Choose:
