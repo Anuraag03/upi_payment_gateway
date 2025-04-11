@@ -3,12 +3,9 @@ import json
 import sqlite3
 import hashlib
 import time
-from speck import SpeckCipher  
-from blockchain import Blockchain
-
-
-blockchain = Blockchain()
-
+from speck import SpeckCipher  # Make sure speck.py is in your project directory
+from blockchain import Block,Blockchain  # Make sure blockchain.py is in your project directory
+from datetime import datetime
 # Constants
 BANK_NAME = "Central Bank Server"
 BANK_HOST = '0.0.0.0'
@@ -20,6 +17,9 @@ branches = {
     "SBI001": {}, "SBI002": {}, "SBI003": {},
     "ICICI001": {}, "ICICI002": {}, "ICICI003": {},
 }
+hdfc_blockchain = Blockchain()
+icici_blockchain = Blockchain()
+sbi_blockchain = Blockchain()
 
 def get_bank_from_ifsc(ifsc):
     if ifsc.startswith("HDFC"):
@@ -112,36 +112,25 @@ def register_account(data):
         return {"status": "error", "message": str(e)}
     finally:
         conn.close()
+
 def decrypt_vmid(vmid_hex):
+    try:
+        # Convert the VMID from hex to an integer
+        vmid_int = int(vmid_hex, 16)
+        
+        # Initialize Speck Cipher (64-bit block, 96-bit key)
+        key = 0x123456789ABCDEF123456789  # 96-bit key
+        cipher = SpeckCipher(key, key_size=96, block_size=64)
 
-    vmid_int = int(vmid_hex, 16)
-    
-    # Initialize Speck Cipher (64-bit block, 96-bit key)
-    key = 0x123456789ABCDEF123456789  # 96-bit key
-    cipher = SpeckCipher(key, key_size=96, block_size=64)
+        # Decrypt the VMID
+        mid_int = cipher.decrypt(vmid_int)
 
-    # Decrypt the VMID
-    mid_int = cipher.decrypt(vmid_int)  # Corrected variable name from mid_int to vmid_int
+        # Convert the decrypted integer to a hex string
+        mid_hex = hex(mid_int)[2:].zfill(16)  # Ensure it's 16 characters long
 
-    # Convert to hex string for MID
-    mid_hex = hex(mid_int)[2:].zfill(16)
-
-    return mid_hex
-
-def blockchain_logging(sender,mid_hex,amount):
-    uid = sender[6]  # UID from sender data
-    mid = mid_hex  # your decryption logic
-    timestamp = time.time()
-    amount = amount
-
-    txn_id_raw = f"{uid}{mid}{timestamp}{amount}"
-    txn_id = hashlib.sha256(txn_id_raw.encode()).hexdigest()
-
-    # Add transaction to blockchain
-    block_data = blockchain.add_block(txn_id)
-    print(f"[Blockchain] Block added: {block_data}")
-
-    return txn_id
+        return mid_hex
+    except Exception as e:
+        raise ValueError(f"Failed to decrypt VMID: {e}")
 
 def handle_transaction(data):
     conn = sqlite3.connect("bank_data.db")
@@ -156,6 +145,7 @@ def handle_transaction(data):
         pin = from_data["pin"]
 
         vmid = to_data["vmid"]
+        print(vmid)
 
         
 
@@ -189,8 +179,7 @@ def handle_transaction(data):
         new_sender_balance = sender[3] - amount
         new_receiver_balance = receiver[2] + amount
 
-        txn_id = blockchain_logging(sender,mid,amount)
-
+        txn_id = hashlib.sha256(f"{sender[6]}{mid}{datetime.now()}{amount}".encode()).hexdigest() # Generate a unique transaction ID here from blockchain
         cursor.execute("UPDATE users SET balance = ? WHERE mmid = ?", (new_sender_balance, mmid))
         cursor.execute("UPDATE merchants SET balance = ? WHERE mid = ?", (new_receiver_balance, mid))
         cursor.execute("""
@@ -198,6 +187,33 @@ def handle_transaction(data):
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (txn_id, from_name, from_ifsc, to_name, to_ifsc, amount, "approved"))
         conn.commit()
+        sender_bank = get_bank_from_ifsc(from_ifsc)
+        receiver_bank = get_bank_from_ifsc(to_ifsc)
+        blockchains = {
+            "HDFC": hdfc_blockchain,
+            "ICICI": icici_blockchain,
+            "SBI": sbi_blockchain
+        }
+        if sender_bank in blockchains:
+            previous_hash = blockchains[sender_bank].get_latest_block().hash
+            blockchains[sender_bank].add_block(Block(
+                txn_id, previous_hash, str(datetime.now()), {  # Updated to use time.time()
+                    "from_user": from_name,
+                    "to_merchant": to_name,
+                    "amount": amount
+                }
+            ))
+
+        # Add transaction to receiver's bank blockchain (if different)
+        if sender_bank != receiver_bank and receiver_bank in blockchains:
+            previous_hash = blockchains[receiver_bank].get_latest_block().hash
+            blockchains[receiver_bank].add_block(Block(
+                txn_id, previous_hash, str(datetime.now()), {
+                    "from_user": from_name,
+                    "to_merchant": to_name,
+                    "amount": amount
+                }
+            ))
 
         print(f"[{BANK_NAME}] ✅ TXN SUCCESS - ID: {txn_id} | ₹{amount} | {from_name} ({from_ifsc}) ➝ {to_name} ({to_ifsc})")
 
@@ -213,7 +229,7 @@ def handle_transaction(data):
         conn.close()
 
 def handle_connection(sock, address):
-    print(f"[{BANK_NAME}] Connected to UPI machine at {address}")
+    print(f"[{BANK_NAME}] Connected to client at {address}")
     try:
         data = sock.recv(2048).decode()
         request = json.loads(data)
@@ -224,6 +240,9 @@ def handle_connection(sock, address):
             response = register_account(request)
         elif request_type == "transaction":
             response = handle_transaction(request)
+        elif request_type == "view_blockchain":
+            bank_name = request.get("bank_name")
+            response = get_blockchain_data(bank_name)
         else:
             response = {"status": "error", "message": "Unknown request type."}
 
@@ -245,9 +264,6 @@ def start_bank_server():
         sock, addr = server_socket.accept()
         handle_connection(sock, addr)
 
-def view_blockchain():
-    for block in blockchain.get_chain():
-        print(block)
 
 def init_db():
     conn = sqlite3.connect("bank_data.db")
@@ -299,7 +315,29 @@ def init_db():
     conn.commit()
     conn.close()
 
+def get_blockchain_data(bank_name):
+    blockchains = {
+        "HDFC": hdfc_blockchain,
+        "ICICI": icici_blockchain,
+        "SBI": sbi_blockchain
+    }
+
+    if bank_name not in blockchains:
+        return {"status": "error", "message": f"Invalid bank name: {bank_name}"}
+
+    blockchain = blockchains[bank_name]
+    chain_data = []
+    for block in blockchain.chain:
+        chain_data.append({
+            "transaction_id": block.transaction_id,
+            "previous_hash": block.previous_hash,
+            "timestamp": block.timestamp,
+            "data": block.data,
+            "hash": block.hash
+        })
+
+    return {"status": "success", "blockchain": chain_data}
+
 if __name__ == "__main__":
     init_db()
     start_bank_server()
-       

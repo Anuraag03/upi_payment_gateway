@@ -1,10 +1,11 @@
 import socket
 import json
-
-UPI_MACHINE_IP = "172.16.126.36"  # Replace with your LAN IP address
+hostname = socket.gethostname()
+IPAddr = socket.gethostbyname(hostname)
+UPI_MACHINE_IP = f"{IPAddr}"  # UPI Machine IP
 UPI_MACHINE_PORT = 8000
 
-BANK_SERVER_IP = "172.16.126.36"  # Replace with your LAN IP address
+BANK_SERVER_IP = f"{IPAddr}"  # Bank Server IP (same machine, different port)
 BANK_SERVER_PORT = 9001
 
 def register_user():
