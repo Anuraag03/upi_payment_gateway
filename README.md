@@ -115,7 +115,7 @@ After you have registered users , merchants and performed transactions to see th
 
 ---
 
-### 4️⃣ Blockchain Logging
+### 5️⃣ Blockchain Logging
 
 Run 
 ```bash
